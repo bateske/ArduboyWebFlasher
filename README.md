@@ -6,19 +6,25 @@ It is specifically designed for use with the Arduboy FX, although some features 
 
 ## How to use
 
-1. Drag & Drop a .hex file anywhere within the page
+1. Drag & Drop a .bin or .hex file anywhere within the page
 2. Click reset if the Arduboy FX is not at the loader menu (bootloader)
 3. Click Upload once the Arduboy FX is on the loader menu (bootloader)
 
 ## To-do
 
-1. Ability to upload .bin file to external flash memory
+1. Clean up code - Maybe
 2. Update UI
+3. Use files from the web?
+
 
 ## Possibly To-do
 
 1. Ability to backup .hex and .bin file from device
 2. ability to backup and upload EEPROM from device
+
+## Want to-do / Need Help
+
+1. Making the code into a library that can easily be embedded into websites.
 
 # Acknowledgements
 

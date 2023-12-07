@@ -1,34 +1,34 @@
 <!doctype html>
 <html>
   <head>
-    <title>Arduboy Web Flasher</title>
+    <title>avr109 test</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
   <div class="main">
       <div class="wrapper">
         <div class="bot">
-          <h1>Arduboy Web Flasher</h1>
+          <h1>Upload-o-matic</h1>
 		  
-          <div id="instructions">Drag & Drop a .hex or .bin file anywhere on the page.</div>
+          <p>Choose a program to upload to Arduboy</p>
+          <p>Drag & Drop a hex file anywhere on the page</p>
 
           <form id="uploadForm"> 
 
-            <label>
+            <label>Program:
               <div class="fileButtonWrapper">
                 <button id="fileButton" type="button" aria-controls="fileInput">Choose file</button>
                 <input id="fileInput" tabindex="-1" type="file"/>
                 <span id="fileName">no file chosen</span>
               </div>
             </label>
-			<div id="instructions">The Arduboy FX must be in the bootloader menu to perform the upload.</div>
+
             <button type="submit" id="uploadBtn">Upload!</button>
           </form>
-
           <form id="resetForm"> 
           <button type="submit" id="resetBtn">Reset!</button>
           </form>
-		  <div id="statusHolder"><div id="statusBar"></div></div>
+		  
         </div>
         <div class="board">
           <img src="images/Micro.jpg"/>
@@ -37,7 +37,7 @@
         <div id="progress"></div>
         <div id="gear"><img src="images/gear4.svg"/></div>
       </div>
-	  <div class="credits">Copyright Arduboy Inc 2024<br>Thank you to Mr. Blinky from the Arduboy Community<br>Based on code from Benjamin Aigner</div>
+	  <div class="credits">Based on code from Benjamin Aigner</div>
     </div>
     
     <!-- HELPER FUNCTIONS -->
@@ -49,7 +49,7 @@
 
 document.addEventListener('dragenter', (e) => {
     dragCounter++;
-    document.body.style.backgroundColor = '#6148ca'; // Change to your preferred color
+    document.body.style.backgroundColor = 'lightblue'; // Change to your preferred color
 });
 
 document.addEventListener('dragleave', (e) => {
@@ -242,170 +242,6 @@ function parseIntelHex(data) {
     
     
     <script>
-	
-	
-	
-	
-	
-	
-	
-	
-	
-
-	
-	
-	
-		// flash FX -------------------------------------------------
-	// flash FX -------------------------------------------------
-		// flash FX -------------------------------------------------
-	// flash FX -------------------------------------------------
-		// flash FX -------------------------------------------------
-	// flash FX -------------------------------------------------
-		// flash FX -------------------------------------------------
-	// flash FX -------------------------------------------------
-		// flash FX -------------------------------------------------
-	// flash FX -------------------------------------------------
-		// flash FX -------------------------------------------------
-	// flash FX -------------------------------------------------
-		// flash FX -------------------------------------------------
-	// flash FX -------------------------------------------------
-		// flash FX -------------------------------------------------
-	// flash FX -------------------------------------------------
-	
-	
-	
-	
-	
-	// flash FX -------------------------------------------------
-	// flash FX -------------------------------------------------
-	
-	
-	async function flashFx(flashData, pageNumber, reader, writer, verify = false, reportProgress = null) {
-    const FX_PAGESIZE = 256;
-    const FX_BLOCKSIZE = 65536;
-	const FX_PAGES_PER_BLOCK = FX_BLOCKSIZE / FX_PAGESIZE;
-	
-	
-    if (!flashData.length) {
-        throw new Error("No flash data provided!");
-    }
-
-    // Define the necessary functions for handling the Arduboy FX
-    const writeAndRead = async (data) => {
-        await writer.write(data);
-        const { value } = await reader.read(1);
-		
-	
-		
-        return value;
-    };
-
-    // ... Include other necessary helper functions and constants ...
-
-
-    // Start the flashing process
-    let blocks = Math.ceil(flashData.length / FX_BLOCKSIZE);
-    console.log(`Flashing ${blocks} blocks to FX`);
-
-    for (let block = 0; block < blocks; block++) {
-        if (block % 2 === 0 || verify) {
-            //await writeAndRead(/* Command to set LED to red and disable buttons */);
-        } else {
-            //await writeAndRead(/* Command to turn off LED and disable buttons */);
-        }
-		
-
-        let blockAddr = pageNumber + block * FX_BLOCKSIZE / FX_PAGESIZE;
-        let blockLen = FX_BLOCKSIZE;
-        // Write block
-		console.log("Writing Block: ", block);
-		statusBar.style.width = (block/blocks) *100 + "%";
-		
-		
-        await writeAndRead(new Uint8Array(['A'.charCodeAt(0), blockAddr >> 8, blockAddr & 0xFF]));
-		
-		let dataSlice = flashData.slice(block * FX_BLOCKSIZE, block * FX_BLOCKSIZE + blockLen);
-		console.log("Length of data Block: ", dataSlice.length);	
-		let realBlockLen = dataSlice.length;
-			        await writer.write(new Uint8Array(['B'.charCodeAt(0), realBlockLen >> 8, blockLen & 0xFF, 'C'.charCodeAt(0)]));
-
-				
-
-
-        await writer.write(dataSlice);
-		console.log("Block written! attempting to Read");
-        await reader.read(1);
-		console.log("read complete!");
-		
-        if (verify) {
-            //await writeAndRead(/* Command for verification */);
-        await writeAndRead(new Uint8Array(['A'.charCodeAt(0), blockAddr >> 8, blockAddr & 0xFF]));
-        await writeAndRead(new Uint8Array(['g'.charCodeAt(0), blockLen >> 8, blockLen & 0xFF, 'C'.charCodeAt(0)]));
-            const verifyData = await reader.read(blockLen);
-            if (!equals(verifyData, flashData.slice(block * FX_BLOCKSIZE, block * FX_BLOCKSIZE + blockLen))) {
-                throw new Error(`FX verify failed at address ${blockAddr.toString(16)}. Upload unsuccessful.`);
-            }
-        }
-
-        if (reportProgress) {
-            reportProgress(block + 1, blocks);
-        }
-    }
-	//console.log("attempting final fx read!");
-    //await reader.read(1);
-		//console.log(" final fx read complete!");
-    
-}
-
-
-
-
-
-
-
-	// flash FX -------------------------------------------------
-	// flash FX -------------------------------------------------
-		// flash FX -------------------------------------------------
-	// flash FX -------------------------------------------------
-		// flash FX -------------------------------------------------
-	// flash FX -------------------------------------------------
-		// flash FX -------------------------------------------------
-	// flash FX -------------------------------------------------
-		// flash FX -------------------------------------------------
-	// flash FX -------------------------------------------------
-		// flash FX -------------------------------------------------
-	// flash FX -------------------------------------------------
-		// flash FX -------------------------------------------------
-	// flash FX -------------------------------------------------
-		// flash FX -------------------------------------------------
-	// flash FX -------------------------------------------------
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	
-	
-	
-	
-	
-	
 		
 		//credits: https://www.geeksforgeeks.org/how-to-delay-a-loop-in-javascript-using-async-await-with-promise/
 	  function waitforme(milisec) {
@@ -437,17 +273,12 @@ function parseIntelHex(data) {
           
           //open & close
           // Wait for the serial port to open.
-		  await port.open({ baudRate: 1200});
+		  await port.open({ baudRate: 1200 });
 		  await waitforme(500);
 		  await port.close();
 		  await waitforme(500);
 		  gear.classList.remove('spinning');
 	  }
-	
-	
-	
-	
-
 	
 	  /****************/
 	  // 2.) open the new bootloader USB-serial (new USB-PID!); user interaction required
@@ -458,17 +289,9 @@ function parseIntelHex(data) {
 			alert("Please use Chromium based browsers!");
 		}
         e.preventDefault();
-		
-		let fileType=0;
+
 		let filecontents;
-		
         const file = fileInput.files[0];
-		if (!file) {
-			alert("No file selected");
-			return;
-		}
-	
-		
         const readerF = new FileReader();
 		
 		
@@ -479,15 +302,10 @@ function parseIntelHex(data) {
 		  const ext = name.substring(lastDot + 1);
 
 		if(ext == "hex"){
-			console.log("hex file detected");
-			fileType=1;
+			alert("hex file detected");
 		}
 		else if(ext == "bin"){
-			console.log("bin file detected");
-			
-			fileType=2;
-			
-			
+			alert("bin file detected");
 		}
 		else{
 			alert("Only .hex and .bin files are supported");
@@ -497,8 +315,8 @@ function parseIntelHex(data) {
           filecontents = event.target.result;
           gear.classList.add('spinning');
           
-		  
-
+          //parse intel hex
+          let flashData = parseIntelHex(filecontents);
           
           //request serial port
           let filters = [
@@ -510,7 +328,7 @@ function parseIntelHex(data) {
           
           //open & close
           // Wait for the serial port to open.
-		  await port.open({ baudRate: 115200, bufferSize: 65536 });
+		  await port.open({ baudRate: 57600 });
 		  
 		  //open writing facilities (with text encoder -> not good!)
 		  /*const textEncoder = new TextEncoderStream();
@@ -524,47 +342,10 @@ function parseIntelHex(data) {
 		  //trigger update by sending programmer ID command
 		  await writer.write(new Uint8Array([0x53]));
 		  
-		  await waitforme(500);
-		  
 		  // Listen to data coming from the serial device.
 		  let state = 0;
 		  let pageStart = 0;
 		  let address = 0;
-		  
-		  if(fileType==2){
-			  console.log(filecontents);
-			          try {
-						  let pageNumber = 0;
-						  const uint8ArrayData = new Uint8Array(filecontents);
-						  console.log("is uint8array: ", uint8ArrayData instanceof Uint8Array); // Should be true
-						  await writer.write(new Uint8Array([120, 0xC2])); // red led and disable buttons
-					await flashFx(uint8ArrayData, pageNumber, reader, writer);
-				} catch (error) {
-
-					console.error("Error flashing FX:", error);
-				}
-				
-				statusBar.style.width = "100%";
-				statusBar.textContent = 'Complete!';
-				setTimeout(function() {
-					statusBar.textContent = '';
-					document.getElementById('statusBar').style.width = '0%';
-				}, 5000); // 5000 milliseconds = 5 seconds
-				
-				
-				await writer.write(new Uint8Array([120, 0x40])); // red led off and enable buttons
-				// success in flashing FX!
-				await waitforme(5);
-				//await port.close();   
-									  gear.classList.remove('spinning');
-					  console.log("Success in flashing FX!!");
-				
-			  return;
-		  }
-          //parse intel hex
-          let flashData = parseIntelHex(filecontents);	  
-		  
-		  
 		  while (true) {
 			  const { value, done } = await reader.read();
 			  if (done) {
@@ -585,15 +366,6 @@ function parseIntelHex(data) {
 				  if(equals(value,[65, 82, 68, 85, 66, 79, 89]))
 				  {
 					  console.log("programmer \"ARDUBOY\" detected, entering programming mode");
-					  await writer.write(new Uint8Array([120, 0xC2])); // red led and disable buttons
-			  const { value, done } = await reader.read();
-			  if (done) {
-				// Allow the serial port to be closed later.
-				reader.releaseLock();
-				writer.releaseLock();
-				break;
-			  }					  
-					  
 					  await writer.write(new Uint8Array([0x50]));
 					  await waitforme(5);
 					  state = 1;
@@ -616,16 +388,6 @@ function parseIntelHex(data) {
 										  if(equals(value,[82, 68, 85, 66, 79, 89]))
 						  {
 						  console.log("programmer \"RDUBOY\" detected, the letters have been found");
-						  
-						  					  await writer.write(new Uint8Array([120, 0xC2])); // red led and disable buttons
-			  const { value, done } = await reader.read();
-			  if (done) {
-				// Allow the serial port to be closed later.
-				reader.releaseLock();
-				writer.releaseLock();
-				break;
-			  }	
-						  
 						  	  await writer.write(new Uint8Array([0x50]));
 							  await waitforme(5);
 							  state = 1;
@@ -656,11 +418,8 @@ function parseIntelHex(data) {
 				  //3.) now flash page
 				  if(equals(value,[13]))
 				  {
-					  
-					  		statusBar.style.width = (pageStart/flashData.data.length) *100 + "%";
-					  
 					  cmd = new Uint8Array([0x42,0x00,0x80,0x46]); //flash page write command ('B' + 2bytes size + 'F')
-
+					  
 					  //determine if this is the last page (maybe incomplete -> fill with 0xFF)
 					  if(pageStart + 128 > flashData.data.length)
 					  {
@@ -693,7 +452,6 @@ function parseIntelHex(data) {
 				  {
 					  console.log("Last page write, leaving programming mode");
 					  //finish flashing and exit bootloader
-					  	
 					  await writer.write(new Uint8Array([0x4C])); //"L" -> leave programming mode
 					  state = 4;
 					  /*state = -1;
@@ -709,20 +467,9 @@ function parseIntelHex(data) {
 				  {
 					  console.log("Exiting bootloader");
 					  //finish flashing and exit bootloader
-					  		  await writer.write(new Uint8Array([120, 0x40])); // red led off and enable buttons
-						await waitforme(5);
 					  await writer.write(new Uint8Array([0x45])); //"E" -> exit bootloader
 					  state = -1;
 					  gear.classList.remove('spinning');
-					  
-					  				statusBar.style.width = "100%";
-				statusBar.textContent = 'Complete!';
-				setTimeout(function() {
-					statusBar.textContent = '';
-					document.getElementById('statusBar').style.width = '0%';
-				}, 5000); // 5000 milliseconds = 5 seconds
-				
-				
 					  console.log("finished!");
 					  reader.cancel();
 					  		  
@@ -732,24 +479,12 @@ function parseIntelHex(data) {
 				 
 			  }
 		  }
-
 		  await port.close();   
          
        };
-	   
-	   
-	   if(fileType ==1){
        readerF.readAsText(file);
-	   }
-	   else if(fileType ==2){
-		   readerF.readAsArrayBuffer(file); // Read the file as an ArrayBuffer
-	   }
-	   
-	   
       }
 
-
-	const statusBar = document.getElementById('statusBar');
       const uploadForm = document.getElementById('uploadForm');
       const resetForm = document.getElementById('resetForm');
       const fileInput = document.getElementById('fileInput');

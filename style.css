@@ -1,6 +1,5 @@
 body {
   font-family: sans-serif;
-  background-color: #3F2B96;
   background-color: #503bad;
   padding: 0px;
   margin: 0px;
@@ -26,8 +25,41 @@ body {
 }
 
 .credits {
-	color: white;
+	color: #30246d;
+	font-size: 10pt;
 }
+
+
+#statusHolder{
+	width: 100%;
+	background: linear-gradient(#191c23, #2d3341);
+	margin: 5px;
+	border: 2px solid black;
+	border-radius: 20px;
+}
+
+
+#statusBar{
+
+	color: white;
+	text-align: center;
+	width: 0%;
+	height: 20px;
+		border-radius: 20px;
+			
+		
+				background:
+			linear-gradient(#d0a9e2, transparent 85%), 
+			linear-gradient(90deg, #433485, #dd3c6e)
+}
+
+
+#instructions{
+	font-size: 10pt;
+	padding: 10px;
+}
+
+
 
 .bot {
   float: left;
@@ -128,6 +160,13 @@ button[type=submit] {
   padding: 10px;
   border-radius: 7px;
 }
+
+button[type=submit]:hover{
+	background-color: #befdc1;
+}
+
+
+
 
 #fileName {
   min-width: 175px;

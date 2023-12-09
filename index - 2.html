@@ -24,196 +24,51 @@
     <link rel="stylesheet" href="style.css?cachebust=2023120601" />
   </head>
   <body>
-  
-  
-
-	
-	<center>
-	
-	<h1>Arduboy FX Web Flasher</h1>
-
-					          <div id="instructions">Drag & Drop a .hex or .bin file then click upload!</div>
-<br>
-
-	
-	<div id="progressBar" class="circular-progress" data-inner-circle-color="lightgrey" data-percentage="0" data-progress-color="#FBF157" data-bg-color="black">
-  <div class="inner-circle"></div>
-  
-
-  <div class="progressHolder">
-	  <div id="progressPercent"></div>
-	  <div id="progressTime"></div>
-	  <div id="uploadBtn">
-	  <div id="uploadIco"></div>
-	  <div id="uploadTxt">Upload</div>
-	  </div>
-</div>
-</div>
-		  <br>
+  <div class="main">
+      <div class="wrapper">
+        <div class="bot">
+          <h1>Arduboy Web Flasher</h1>
 		  
-<div class="bottomContainer">
+          <div id="instructions">Drag & Drop a .hex or .bin file anywhere on the page.</div>
 
-	          <div class="fileButtonWrapper">
-					
-					<div class="restWrap">
-						<div id="resetBtn"></div>		
-						<div id="fileButton">File Select</div>
-					</div>
+          <form id="uploadForm"> 
 
-					<input id="fileInput" tabindex="-1" type="file"/>
-					<div id="fileName">&nbsp;</div>
-					
+            <label>
+              <div class="fileButtonWrapper">
+                <button id="fileButton" type="button" aria-controls="fileInput">Choose file</button>
+                <input id="fileInput" tabindex="-1" type="file"/>
+                <span id="fileName">no file chosen</span>
               </div>
-
-
-
-</div>
-
-<br><br><br>
+            </label>
 			<div id="instructions">The Arduboy FX must be in the bootloader menu to perform the upload.</div>
-			<br><br>
-<div class="credits">Thank you to Benjamin Naigener and Mr. Blinky</div>
-</center>
+            <button type="submit" id="uploadBtn">Upload!</button>
+          </form>
 
-
-	
-	
+          <form id="resetForm"> 
+          <button type="submit" id="resetBtn">Reset!</button>
+          </form>
+		  <div id="statusHolder"><div id="statusBar"></div></div>
+        </div>
+        <div class="board">
+          <img src="images/Micro.jpg"/>
+        </div>
+        <div id="pipe"></div>
+        <div id="progress"></div>
+        <div id="gear"><img src="images/gear4.svg"/></div>
+      </div>
+	  <div class="credits">Copyright Arduboy Inc 2024<br>Thank you to Mr. Blinky from the Arduboy Community<br>Based on code from Benjamin Aigner</div>
+    </div>
+    
     <!-- HELPER FUNCTIONS -->
     <script>
 	
-	
-	
-let currentAnimation = null;
-let lastEndValue = 0; // Cache the last end value
-let lastCallTime = 0; // Timestamp of the last function call
-let currentValue = 0; // Current progress value
-let progressHistory = []; // Stores history of progress values and timestamps
-
-function drawPercentage(percentVal) {
-    let now = Date.now();
-    let timeElapsed = now - lastCallTime; // Time since last call
-    lastCallTime = now; // Update the timestamp
-
-    // Output the actual duration
-    //console.log("Time Elapsed: ", timeElapsed, "ms");
-
-    let endValue = Math.round(percentVal);
-    progressHistory.push({ time: now, value: endValue });
-    let estimatedTimeToComplete = Math.round(estimateTimeToComplete());
-
-   
-       if (percentVal > 0) {
-		   progressPercent.textContent=endValue + '%';
-			console.log("Estimated Time to Complete: ", estimatedTimeToComplete, "seconds");
-			if(estimatedTimeToComplete==0){
-				if(percentVal==100){
-					progressTime.textContent="Complete!";
-				}
-				else{
-					progressTime.textContent="";
-				}
-				
-			}
-			else{
-				progressTime.textContent=estimatedTimeToComplete + " seconds left";
-			}
-			
-	   }
-
-
-
-   let progressColor = progressBar.getAttribute("data-progress-color");
-
-    // Adjust animation speed based on new endValue
-    let frameRate = calculateFrameRate(timeElapsed, endValue);
-
-
-
- 
-
-    if (currentAnimation !== null) {
-        cancelAnimationFrame(currentAnimation);
-    }
-
-    function animate(step) {
-        if (currentValue > endValue) {
-			currentValue = currentValue - step;
-        }
-		else{
-			currentValue = Math.min(currentValue + step, endValue);
-		}
-		
-        progressBar.style.background = `conic-gradient(${progressColor} ${
-            currentValue * 3.6
-        }deg, ${progressBar.getAttribute("data-bg-color")} 0deg)`;
-		
-		if(currentValue+endValue==0){
-			progressBar.style.background = '';
-			progressHistory = [];
-		}
-
-        currentAnimation = requestAnimationFrame(() => animate(frameRate));
-    }
-
-    animate(frameRate);
-}
-
-
-	
-	
-function calculateFrameRate(timeElapsed, endValue) {
-    let baseFrameRate = 0.02;
-    let expectedDuration = 500; // Adjust as needed
-
-    if (endValue === 0) {
-				progressTime.textContent='';
-		progressPercent.textContent='';
-		
-        return 5; // Faster frame rate for resetting
-    } else if (timeElapsed > 0) {
-        let dynamicRate = baseFrameRate * (expectedDuration / timeElapsed);
-        return dynamicRate * (endValue - currentValue);
-    } else {
-        return baseFrameRate;
-    }
-}
-	
-	
-	
-function estimateTimeToComplete() {
-    if (progressHistory.length < 3) {
-        return 0; // Not enough data to calculate
-    }
-
-    // Calculate average speed (percent change per millisecond)
-    let totalChange = 0;
-    let totalTime = 0;
-    for (let i = 1; i < progressHistory.length; i++) {
-        let change = progressHistory[i].value - progressHistory[i - 1].value;
-        let time = progressHistory[i].time - progressHistory[i - 1].time;
-        totalChange += change;
-        totalTime += time;
-    }
-    let averageSpeed = totalChange / totalTime;
-
-    if (averageSpeed === 0) {
-        return "Infinity"; // No progress being made
-    }
-
-    let remaining = 100 - progressHistory[progressHistory.length - 1].value;
-    let estimatedTimeMillis = remaining / averageSpeed;
-
-    return (estimatedTimeMillis / 1000).toFixed(2); // Convert to seconds
-}
-
-
 	
 	
 	let dragCounter = 0;
 
 document.addEventListener('dragenter', (e) => {
     dragCounter++;
-    document.body.style.backgroundColor = '#9831c4'; // Change to your preferred color
+    document.body.style.backgroundColor = '#6148ca'; // Change to your preferred color
 });
 
 document.addEventListener('dragleave', (e) => {
@@ -483,8 +338,8 @@ function parseIntelHex(data) {
         let blockLen = FX_BLOCKSIZE;
         // Write block
 		console.log("Writing Block: ", block);
-		//statusBar.style.width = (block/blocks) *100 + "%";
-		drawPercentage((block/blocks) *100);
+		statusBar.style.width = (block/blocks) *100 + "%";
+		
 		
         await writeAndRead(new Uint8Array(['A'.charCodeAt(0), blockAddr >> 8, blockAddr & 0xFF]));
 		
@@ -592,7 +447,7 @@ function parseIntelHex(data) {
 			alert("Please use Chromium based browsers!");
 		}
         e.preventDefault();
-		//gear.classList.add('spinning');
+		gear.classList.add('spinning');
 		let filters = [
 			  { usbVendorId: 0x2341, usbProductId: 0x0036 },
 			  { usbVendorId: 0x2341, usbProductId: 0x8036 }
@@ -605,7 +460,7 @@ function parseIntelHex(data) {
 		  await waitforme(500);
 		  await port.close();
 		  await waitforme(500);
-		  //gear.classList.remove('spinning');
+		  gear.classList.remove('spinning');
 	  }
 	
 	
@@ -657,14 +512,9 @@ function parseIntelHex(data) {
 			alert("Only .hex and .bin files are supported");
 		}
 
-
-
-
-
-
         readerF.onload = async function(event) {
           filecontents = event.target.result;
-          //gear.classList.add('spinning');
+          gear.classList.add('spinning');
           
 		  
 
@@ -680,10 +530,7 @@ function parseIntelHex(data) {
           //open & close
           // Wait for the serial port to open.
 		  await port.open({ baudRate: 115200, bufferSize: 65536 });
-	
-
-		uploadBtn.style.display = "none";
-	
+		  
 		  //open writing facilities (with text encoder -> not good!)
 		  /*const textEncoder = new TextEncoderStream();
 		  const writableStreamClosed = textEncoder.readable.pipeTo(port.writable);
@@ -716,28 +563,19 @@ function parseIntelHex(data) {
 					console.error("Error flashing FX:", error);
 				}
 				
-				
-				
-				drawPercentage(100);
-				
-				
-				//statusBar.style.width = "100%";
-				//statusBar.textContent = 'Complete!';
+				statusBar.style.width = "100%";
+				statusBar.textContent = 'Complete!';
 				setTimeout(function() {
-					uploadBtn.style.display = "block";
-					drawPercentage(0);
-					//statusBar.textContent = '';
-					//document.getElementById('statusBar').style.width = '0%';
+					statusBar.textContent = '';
+					document.getElementById('statusBar').style.width = '0%';
 				}, 5000); // 5000 milliseconds = 5 seconds
 				
 				
 				await writer.write(new Uint8Array([120, 0x40])); // red led off and enable buttons
 				// success in flashing FX!
 				await waitforme(5);
-				reader.releaseLock();
-				writer.releaseLock();
-				await port.close();   
-									  //gear.classList.remove('spinning');
+				//await port.close();   
+									  gear.classList.remove('spinning');
 					  console.log("Success in flashing FX!!");
 				
 			  return;
@@ -838,8 +676,7 @@ function parseIntelHex(data) {
 				  if(equals(value,[13]))
 				  {
 					  
-					  		//statusBar.style.width = (pageStart/flashData.data.length) *100 + "%";
-					  drawPercentage((pageStart/flashData.data.length) *100);
+					  		statusBar.style.width = (pageStart/flashData.data.length) *100 + "%";
 					  
 					  cmd = new Uint8Array([0x42,0x00,0x80,0x46]); //flash page write command ('B' + 2bytes size + 'F')
 
@@ -895,16 +732,13 @@ function parseIntelHex(data) {
 						await waitforme(5);
 					  await writer.write(new Uint8Array([0x45])); //"E" -> exit bootloader
 					  state = -1;
-					  //gear.classList.remove('spinning');
+					  gear.classList.remove('spinning');
 					  
-					  				//statusBar.style.width = "100%";
-				//statusBar.textContent = 'Complete!';
-				drawPercentage(100);
+					  				statusBar.style.width = "100%";
+				statusBar.textContent = 'Complete!';
 				setTimeout(function() {
-					uploadBtn.style.display = "block";
-					//statusBar.textContent = '';
-					//statusBar.style.width = '0%';
-					drawPercentage(0);
+					statusBar.textContent = '';
+					document.getElementById('statusBar').style.width = '0%';
 				}, 5000); // 5000 milliseconds = 5 seconds
 				
 				
@@ -932,11 +766,11 @@ function parseIntelHex(data) {
 	   
 	   
       }
-	  	const progressPercent = document.getElementById('progressPercent');
-	const progressTime = document.getElementById('progressTime');
-	const progressBar = document.getElementById('progressBar');
-	//const statusBar = document.getElementById('statusBar');
-      const resetBtn = document.getElementById('resetBtn');
+
+
+	const statusBar = document.getElementById('statusBar');
+      const uploadForm = document.getElementById('uploadForm');
+      const resetForm = document.getElementById('resetForm');
       const fileInput = document.getElementById('fileInput');
       const fileButton = document.getElementById('fileButton');
       const fileName = document.getElementById('fileName');
@@ -944,10 +778,10 @@ function parseIntelHex(data) {
       const uploadBtn = document.getElementById('uploadBtn');
       const log = document.getElementById('log');
       const progress = document.getElementById('progress');
-      //const gear = document.getElementById('gear');
+      const gear = document.getElementById('gear');
 
-      uploadBtn.addEventListener('click', handleSubmit, false);
-      resetBtn.addEventListener('click', handleReset, false);
+      uploadForm.addEventListener('submit', handleSubmit, false);
+      resetForm.addEventListener('submit', handleReset, false);
       fileButton.addEventListener('click', () => fileInput.click());
 
       fileInput.addEventListener('change', (event) => {

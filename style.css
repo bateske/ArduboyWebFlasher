@@ -1,8 +1,68 @@
+
+
+
+:root {
+  --progress-bar-width: 300px;
+  --progress-bar-height: 300px;
+  --font-size: 2rem;
+}
+
+
+.circular-progress {
+  width: var(--progress-bar-width);
+  height: var(--progress-bar-height);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0,0,0,0);
+  
+}
+.inner-circle {
+  position: absolute;
+  width: calc(var(--progress-bar-width) - 30px);
+  height: calc(var(--progress-bar-height) - 30px);
+  border-radius: 50%;
+  background-color: lightgrey;
+  background-image: url("./images/buttons.png");
+  			  background-repeat: no-repeat;
+	  background-position: center;
+		  background-size: 120%;
+}
+
+.progressHolder{
+	position: relative;
+}
+
+#progressTime{
+text-align: center;
+	  display: block;
+	  font-size: 25px;
+}
+
+
+#progressPercent{
+text-align: center;
+	   display: block;
+	  font-size: 70px;
+}
+
+
+
+
+
+
+h1{
+	color:white;
+}
+
+
 body {
   font-family: sans-serif;
-  background-color: #503bad;
+  background-color: #8B2DB4;
   padding: 0px;
   margin: 0px;
+    cursor: default;
 }
 
 .main {
@@ -25,7 +85,7 @@ body {
 }
 
 .credits {
-	color: #30246d;
+	color: white;
 	font-size: 10pt;
 }
 
@@ -56,9 +116,17 @@ body {
 
 #instructions{
 	font-size: 10pt;
-	padding: 10px;
+	//padding: 10px;
+	color: white;
 }
 
+
+.bottomContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* or center */
+	position: relative;
+}
 
 
 .bot {
@@ -117,23 +185,51 @@ select, input {
 }
 
 .fileButtonWrapper {
-  display: block;
+	position: relative;
+
 }
 
-#fileButton, button[type=submit] {
-  background-color: #acd3f6;
-  border: 1px solid #7998b4;
-  border-radius: 4px;
+
+.bottomSpacer{
+	width: 20px;
+}
+
+.restWrap{
+	display:inline-block;
+	position: relative;
+}
+
+#fileButton {
+  user-select: none; 
+ display: inline-block;
+  border-radius: 17px;
+  //height: 30px;
   padding: 4px 8px 4px 8px;
   position: relative;
   overflow: hidden;
-  margin-right: 20px;
-  margin-top: 8px;
+
+
+border: 2px solid rgba(0,0,0,0);
+
   cursor: pointer;
   font-size: 16px;
+  color: white;
+  background: rgba(255,255,255,0.1);
+}
+#fileButton:hover{
+	border: 2px solid white;
+}
+
+#fileButton:active{
+	  font-size: 14px;
+	  //padding: 2px 6px 2px 6px;
+	margin: 1.5px 5px 1px 5px;
+
 }
 
 input[type=file] {
+	display: inline-block;
+	display: none;
   position: absolute;
   top: 0;
   right: 0;
@@ -142,7 +238,7 @@ input[type=file] {
   outline: none;
   background: white;
   cursor: inherit;
-  display: block;
+
 }
 
 input[type=file]:focus {
@@ -153,7 +249,7 @@ input[type=file]:focus {
 button[type=submit] {
   float: right;
   font-size: 20px;
-  margin-top: 20px;
+
   margin-right: 5px;
   background-color: #99f89c;
   border: 2px solid #7fc381;
@@ -166,16 +262,81 @@ button[type=submit]:hover{
 }
 
 
+#uploadBtn{
+	
+	cursor: pointer;
+	  background: rgba(0,0,0,0.1);
+	  		  border-radius: 100%;
+			  height: 150px;
+			  width: 150px;
+			  
+}
+
+#uploadBtn:hover{
+		border: 2px solid darkgrey;
+}
+#uploadBtn:active{
+			  height: 148px;
+			  width: 148px;
+}
+
+
+
+#uploadIco{
+padding-top: 15px;
+		background-image: url("./images/upload-icon.png");
+		height: 100px;
+		width: 100px;
+			  background-repeat: no-repeat;
+	  background-position: center;
+		  background-size: 69%;
+		  	
+	
+		 
+}
+
+
+
+#resetBtn{
+	
+	  background: rgba(255,255,255,0.1);
+	  cursor: pointer;
+
+position: absolute;
+
+left: 200px;
+
+	height:30px;
+	width: 30px;
+	background-image: url("./images/reset-icon.png");
+	  background-repeat: no-repeat;
+	  background-position: center;
+	  background-size: 69%;
+	  border: 2px solid rgba(0,0,0,0);
+	 border-radius: 100%;
+}
+#resetBtn:hover{
+	border: 2px solid white;
+}
+
+#resetBtn:active{
+margin: 2px;
+		height:26px;
+	width: 26px;
+}
 
 
 #fileName {
-  min-width: 175px;
-  max-width: 175px;
+	display: block;
+
+  max-width: 300px;
   max-height: 20px;
-  color: #666;
+  color: lightgrey;
   overflow: hidden;
   position: relative;
   text-overflow: ellipsis;
+  white-space: nowrap;
+
 }
 
 #gear {

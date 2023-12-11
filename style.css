@@ -1,5 +1,12 @@
 
 
+a{
+color: white;
+
+}
+a:hover{
+	color:yellow;
+}
 
 :root {
   --progress-bar-width: 300px;
@@ -56,6 +63,9 @@ h1{
 	color:white;
 }
 
+h3{
+	color: white;
+}
 
 body {
   font-family: sans-serif;

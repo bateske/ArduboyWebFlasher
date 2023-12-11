@@ -595,7 +595,9 @@ function computeEstimate() {
 	            return;
 	        }
 	        filetype = 2;
+			console.log("awaiting blob");
 	        file = await response.blob();
+			console.log("blobbed");
 
 	    } else {
 			

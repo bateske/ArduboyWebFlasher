@@ -680,7 +680,7 @@ async function flashFx(flashData, pageNumber = 0, verify = false) {
     }
 
     await endProgramming(serial1);
-    await beginProgramming(serial1);
+    await serial1.cleanup();
 
     console.log("Success in flashing FX!!");
 
@@ -740,6 +740,7 @@ async function flashHex(hexData) {
 
     await leaveBootloader(serial1);
     await endProgramming(serial1);
+	await serial1.cleanup();
 
     console.log("finished!");
 

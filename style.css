@@ -56,6 +56,11 @@ text-align: center;
 
 
 
+.interesting{
+	background-color: rgba(0,0,0,0.2);
+	border-radius: 5px;
+	padding: 2px 6px 2px 6px;
+}
 
 
 

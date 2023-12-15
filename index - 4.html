@@ -53,14 +53,13 @@
          <div id="fileName">Whole Enchilada.bin</div>
       </div>
    </div>
-   <div id="instructions">- or -<br>Drag & Drop your own <span class="interesting">hex</span> <span class="interesting">bin</span> or <span class="interesting">arduboy</span> file anywhere on the page</div>
+   <div id="instructions">- or -<br>Drag & Drop your own .hex or .bin file anywhere on the page</div>
    <h3>Instructions</h3>
    <div id="instructions">Connect your Arduboy FX to USB and power on, then click the Upload button.<BR>The Arduboy FX must be in the bootloader menu to perform the upload.</div>
    <h3>FAQ</h3>
    <div id="instructions">.hex files are individual Arduboy games created using <a href="https://community.arduboy.com/t/make-your-own-arduboy-game-part-1-setting-up-your-computer/7924">Arduino</a> or download from the <a href="https://community.arduboy.com/c/games/35">Arduboy Community</a>.</div>
       <div id="instructions">.bin files are a collection of Arduboy games, to be stored on the external memory of the Arduboy FX.</div>
 	     <div id="instructions">Create .bin files using the <a href="https://community.arduboy.com/t/arduboy-fx-cart-builder/10395">Online Cart Builder</a> or Mr. Blinky's <a href="https://community.arduboy.com/t/using-python/7745">Arduboy Python Utilities</a>.</div>
-	     <div id="instructions">.arduboy files contain both the .hex and .bin files needed to publish an Arduboy FX game. <a href="https://community.arduboy.com/t/arduboy-game-format-guide-arduboy-files/2784">Learn more about the .arduboy format</a>.</div>
 		    <div id="instructions">For all of your more advanced and offline Arduboy needs please see: <a href="https://community.arduboy.com/t/arduboy-toolset/11227">Arduboy Toolset</a></div>
    <br><br>
    <div class="credits">Thank you to Mr. Blinky and Benjamin Naigener</div>
@@ -68,18 +67,9 @@
 
 
 	
-<script src="jszip.min.js"></script>
-
+	
 <script>
 	
-
-// -- debug helper
-
-function debug(variableObject) {
-    for (let name in variableObject) {
-        console.log(`${name}: `, variableObject[name]);
-    }
-}
 
 // --- DOM Element object definitions ---
 
@@ -174,7 +164,7 @@ function drawPercentage(percentVal) {
 
 	if (percentVal > 0) {
 		progressPercent.textContent = endValue + '%';
-		//console.log("Estimated Time to Complete: ", estimatedTimeToComplete, "seconds");
+		console.log("Estimated Time to Complete: ", estimatedTimeToComplete, "seconds");
 		if (estimatedTimeToComplete == 0) {
 			if (percentVal == 100) {
 				progressTime.textContent = "Complete!";
@@ -301,214 +291,75 @@ function computeEstimate() {
 // --- Library Interface ---
 
 
-
-function processArduboyInfo(info) {
-	
-	
-	let fileName = '';
-	let flashData = '';
-	let flashSave = '';
-	
-	
-
-if (info.binaries && info.binaries.length > 0) {
-    const binaries = info.binaries;
-
-    binaries.forEach(binary => {
-         fileName = binary.filename;
-         flashData = binary.flashdata;
-         flashSave = binary.flashsave;
-
-    });
-} else {
-    console.log("No binaries found in the JSON");
-}
-
- return { fileName, flashData, flashSave };
-}
-
-function fixJSON(inputJSON) {
-    let lines = inputJSON.split("\n");
-    
-    for (let i = 0; i < lines.length - 1; i++) {
-        let line = lines[i].trim();
-        let nextLine = lines[i + 1].trim();
-
-        if (line.endsWith(",") && (nextLine.startsWith("]") || nextLine.startsWith("}"))) {
-            lines[i] = line.substring(0, line.length - 1);
-        }
-    }
-
-    return lines.join("\n");
-}
-
-function padToMultiple(data, multiple) {
-    const remainder = data.length % multiple;
-    if (remainder === 0) return data; // Already a multiple, no padding needed
-
-    const paddingLength = multiple - remainder;
-    const padding = new Uint8Array(paddingLength).fill(0xFF); // Create padding with 0xFF
-    return Uint8Array.from([...data, ...padding]); // Combine data and padding
-}
-
-function padDataToBlockSize(data, blockSize) {
-    const dataSize = data.length;
-    const remainder = dataSize % blockSize;
-    const paddingSize = remainder === 0 ? 0 : blockSize - remainder;
-    const paddedData = new Uint8Array(paddingSize + dataSize).fill(0xFF);
-
-    paddedData.set(data, paddingSize); // Copy original data to the end of the new array
-    return paddedData;
-}
-
-
-async function loadFile(file) {
-    var zip = new JSZip();
-
-    try {
-        const zipContents = await JSZip.loadAsync(file);
-        const content = await zipContents.file("info.json").async("string");
-
-        let fixedJSON = fixJSON(content);
-        const info = JSON.parse(fixedJSON);
-        const {
-            fileName,
-            flashData,
-            flashSave
-        } = processArduboyInfo(info);
-
-        let hexFileData,
-        flashFileData,
-        saveFileData;
-
-        if (fileName) {
-            console.log("Hex File: ", fileName);
-            hexFileData = await zipContents.file(fileName).async("string");
-        }
-        if (flashData) {
-            console.log("Bin File: ", flashData);
-            flashFileData = await zipContents.file(flashData).async("uint8array");
-        }
-        if (flashSave) {
-            console.log("Save File: ", flashSave);
-            saveFileData = await zipContents.file(flashSave).async("uint8array");
-        } else {
-            console.log("No Save File Detected");
-        }
-
-        let devData;
-
-        if (flashFileData) {
-            console.log("flashFileData: ", flashFileData.length);
-            flashFileData = padToMultiple(flashFileData, 256); //FX_PAGESIZE
-            console.log("flashFileDataPadded: ", flashFileData.length);
-            devData = flashFileData;
-        }
-
-        if (saveFileData) {
-            console.log("saveFileData: ", saveFileData.length);
-            saveFileData = padToMultiple(saveFileData, 4096);
-            console.log("flashFileDataPadded: ", flashFileData.length);
-            if (flashFileData) {
-                devData = devData + saveFileData;
-            } else {
-                console.log("Save File found, but no Data File. Aborting!");
-                return;
-            }
-        }
-
-        console.log("devDataLength: ", devData.length);
-
-        const paddedData = padDataToBlockSize(devData, FX_BLOCKSIZE);
-        console.log("devDataPadded:", paddedData.length); // This should now be a multiple of 65536
-
-        await flashArduboy(hexFileData, paddedData);
-
-        // Additional processing with hexFileData, flashFileData, saveFileData
-    } catch (e) {
-        console.error("Error processing file:", e);
-    }
-}
-
-
 async function handleSubmit(e) {
 
-    if (!("serial" in navigator)) {
-        alert("Please use Chromium based browsers!");
-        return;
-    }
+	if (!("serial" in navigator)) {
+		alert("Please use Chromium based browsers!");
+		return;
+	}
 
-    let fileType = 0;
-    let fileContents;
+	let fileType = 0;
+	let fileContents;
 
-    let file = fileInput.files[0];
-    const readerF = new FileReader();
+	let file = fileInput.files[0];
+	const readerF = new FileReader();
 
-    if (!file) {
+	if (!file) {
 
-        // If no file is provided, use the default file
+		// If no file is provided, use the default file
 
-        const response = await fetch('Whole Enchilada.bin');
-        if (!response.ok) {
-            alert("Error loading default file");
-            return;
-        }
-        fileType = 2;
-        console.log("awaiting blob");
-        file = await response.blob();
-        console.log("blobbed");
+		const response = await fetch('Whole Enchilada.bin');
+		if (!response.ok) {
+			alert("Error loading default file");
+			return;
+		}
+		fileType = 2;
+		console.log("awaiting blob");
+		file = await response.blob();
+		console.log("blobbed");
 
-    } else {
+	} else {
 
-        //User uploaded a file, determine if it is a HEX or BIN and set the fileType
+		//User uploaded a file, determine if it is a HEX or BIN and set the fileType
 
-        const name = fileInput.files[0].name;
-        const lastDot = name.lastIndexOf('.');
-        const fileName = name.substring(0, lastDot);
-        const ext = name.substring(lastDot + 1);
+		const name = fileInput.files[0].name;
+		const lastDot = name.lastIndexOf('.');
+		const fileName = name.substring(0, lastDot);
+		const ext = name.substring(lastDot + 1);
 
-        if (ext == "hex") {
-            console.log("hex file detected");
-            fileType = 1;
-        } else if (ext == "bin") {
-            console.log("bin file detected");
-            fileType = 2;
-        } else if (ext == "arduboy") {
-            console.log("arduboy file detected");
-            fileType = 3;
-        } else {
-            alert("Only .hex .bin and .arduboy files are supported");
-        }
-    }
+		if (ext == "hex") {
+			console.log("hex file detected");
+			fileType = 1;
+		} else if (ext == "bin") {
+			console.log("bin file detected");
+			fileType = 2;
+		} else {
+			alert("Only .hex and .bin files are supported");
+		}
+	}
 
-    readerF.onload = async function (event) {
+	readerF.onload = async function (event) {
 
-        fileContents = event.target.result;
+		fileContents = event.target.result;
 
-        if (fileType == 1) {
-            flashHex(fileContents);
-        } else if (fileType == 2) {
+		if (fileType == 1) {
+			flashHex(fileContents); 
+		} else if (fileType == 2) {
 
-            const uint8ArrayData = new Uint8Array(fileContents);
-            flashFx(uint8ArrayData);
-        }
+			const uint8ArrayData = new Uint8Array(fileContents);
+			flashFx(uint8ArrayData);
+		}
 
-    };
+	};
 
-    if (fileType == 1) {
-        readerF.readAsText(file);
-    } else if (fileType == 2) {
-        readerF.readAsArrayBuffer(file);
-    } else if (fileType == 3) {
-        // will need to process zip here?
-        // just calling to debugge
-
-        loadFile(file);
-
-        //flashArduboy();
-    }
+	if (fileType == 1) {
+		readerF.readAsText(file);
+	} else if (fileType == 2) {
+		readerF.readAsArrayBuffer(file);
+	}
 
 }
+
 // --- End Library Interface ---
 
 
@@ -683,7 +534,6 @@ a.every((v, i) => v === b[i]);
 // --- Web Serial API Calls after this point ---
 
 
-
 let filters = [{ // Port filters for Arduino Leonardo in Bootloader and Application Mode
 		usbVendorId: 0x2341,
 		usbProductId: 0x0036
@@ -776,42 +626,20 @@ async function endProgramming(serialManager) {
     }, 5000);
 }
 
-const HEADER_START_STRING = "ARDUBOY";
-const HEADER_START_BYTES = new TextEncoder().encode(HEADER_START_STRING);
-const HEADER_LENGTH = 256;
-const SLOT_SIZE_HEADER_INDEX = 12;
 
-const FX_PAGESIZE = 256;
-const FX_BLOCKSIZE = 65536;
-const FX_PAGES_PER_BLOCK = FX_BLOCKSIZE / FX_PAGESIZE;
+async function flashBlock(serialManager, block, blocks, flashData, pageNumber, FX_PAGESIZE, FX_BLOCKSIZE) {
+    let blockAddr = pageNumber + block * FX_BLOCKSIZE / FX_PAGESIZE;
+    let blockLen = FX_BLOCKSIZE;
+    console.log("Writing Block: ", block);
+    drawPercentage((block / blocks) * 100);
 
-const FX_FULLCART_SIZE = 16777216;
-const FX_BLOCKS_PER_FULLCART = FX_FULLCART_SIZE / FX_BLOCKSIZE;
+    await serialManager.writeAndRead(new Uint8Array(['A'.charCodeAt(0), blockAddr >> 8, blockAddr & 0xFF])); // address command
 
-
-async function flashBlock(serialManager, writeBlock, flashData, readBlock) {
-	
-	if (readBlock === undefined || readBlock === null) {
-        readBlock = writeBlock;
-    }
-	
-    let blockAddr = writeBlock * FX_BLOCKSIZE / FX_PAGESIZE;
-	let readOffset = readBlock * FX_BLOCKSIZE;
-   debug({writeBlock});
-   debug({readBlock});
-   
-   const addrCommand = new Uint8Array(['A'.charCodeAt(0), blockAddr >> 8, blockAddr & 0xFF]);
-   
-   debug({addrCommand});
-   
-
-    await serialManager.writeAndRead( addrCommand ); // address command
-
-    let dataSlice = flashData.slice(readOffset, readOffset + FX_BLOCKSIZE);
-    console.log("Length of data Block:", dataSlice.length);
+    let dataSlice = flashData.slice(block * FX_BLOCKSIZE, block * FX_BLOCKSIZE + blockLen);
+    console.log("Length of data Block: ", dataSlice.length);
     let realBlockLen = dataSlice.length;
-debug({dataSlice});
-    await serialManager.writer.write(new Uint8Array(['B'.charCodeAt(0), realBlockLen >> 8, realBlockLen & 0xFF, 'C'.charCodeAt(0)])); // data command
+
+    await serialManager.writer.write(new Uint8Array(['B'.charCodeAt(0), realBlockLen >> 8, blockLen & 0xFF, 'C'.charCodeAt(0)])); // data command
     await serialManager.writer.write(dataSlice); // data write
     console.log("Block written! attempting to Read");
 
@@ -820,14 +648,13 @@ debug({dataSlice});
 }
 
 
-
-
-
 async function flashFx(flashData, pageNumber = 0, verify = false) {
     if (!flashData.length) {
         throw new Error("No flash data provided!");
     }
-
+    const FX_PAGESIZE = 256;
+    const FX_BLOCKSIZE = 65536;
+    const FX_PAGES_PER_BLOCK = FX_BLOCKSIZE / FX_PAGESIZE;
 
     const serial1 = new SerialPortManager();
     await serial1.initPort();
@@ -837,8 +664,8 @@ async function flashFx(flashData, pageNumber = 0, verify = false) {
     console.log('Flashing ${blocks} blocks to FX');
 
     for (let block = 0; block < blocks; block++) {
-			drawPercentage((block / blocks) * 100);
-        await flashBlock(serial1, block, flashData);
+
+        await flashBlock(serial1, block, blocks, flashData, pageNumber, FX_PAGESIZE, FX_BLOCKSIZE);
 
         if (verify) {
             // TODO -- TEST and get working --- UNTESTED
@@ -868,20 +695,20 @@ async function leaveBootloader(serialManager) {
 }
 
 
-function flashHexPage(flashData, pageStart) {
+function flashHexBlock(flashData, pageStart) {
     let data, pad, txx;
-
+	cmd = new Uint8Array([0x42, 0x00, 0x80, 0x46]); //flash page write command ('B' + 2bytes size + 'F')
 
     // Check if this is the last page (possibly incomplete -> fill with 0xFF)
     if (pageStart + 128 > flashData.data.length) {
         data = flashData.data.slice(pageStart); // Take the remaining bit
         pad = new Uint8Array(128 - data.length); // Create a new padding array
         pad.fill(0xFF);
-        txx = Uint8Array.from([ ...data, ...pad]); // Concat command, remaining data, and padding
+        txx = Uint8Array.from([...cmd, ...data, ...pad]); // Concat command, remaining data, and padding
         console.log("last page");
     } else {
         data = flashData.data.slice(pageStart, pageStart + 128); // Take subarray with 128B
-        txx = Uint8Array.from([ ...data]); // Concatenate command with page data
+        txx = Uint8Array.from([...cmd, ...data]); // Concatenate command with page data
     }
 
     return txx;
@@ -904,21 +731,16 @@ async function flashHex(hexData) {
         drawPercentage((pageStart / flashData.data.length) * 100);
 
         await serial1.writeAndRead(new Uint8Array([0x41, (address >> 8) & 0xFF, address & 0xFF])); //addresss command
-        let txx = flashHexPage(flashData, pageStart); //generate  page data
-        cmd = new Uint8Array([0x42, 0x00, 0x80, 0x46]); //flash page write command ('B' + 2bytes size + 'F')
-
-        await serial1.writer.write(cmd);
+        let txx = flashHexBlock(flashData, pageStart); //generate  page data
         await serial1.writeAndRead(txx); //write the page data
 
         pageStart += 128;
         address += 64;
-    } while (pageStart < flashData.data.length);
+    } while (pageStart + 128 <= flashData.data.length);
 
-    await waitforme(500);
     await leaveBootloader(serial1);
     await endProgramming(serial1);
-
-    await serial1.cleanup();
+	await serial1.cleanup();
 
     console.log("finished!");
 
@@ -926,211 +748,6 @@ async function flashHex(hexData) {
 
 
 
-
-
-
-
-
-// Function to check if the data at the given index is an FX slot
-function isSlot(fullData, index) {
-
-    return HEADER_START_BYTES.every((byte, offset) => {
-        const fullDataByte = fullData[index + offset];
-        //console.log(`Comparing: HEADER_START_BYTES[${offset}] = ${byte}, fullData[${index + offset}] = ${fullDataByte}`);
-        return byte === fullDataByte;
-    });
-}
-
-// Function to get a 2-byte value from the data (big endian)
-function get2ByteValue(fullData, index) {
-    return new DataView(fullData.buffer).getUint16(index, false); // false for big-endian
-}
-
-// Function to get the size in bytes of the FX slot
-function getSlotSizeBytes(fullData, index) {
-    return get2ByteValue(fullData, index + SLOT_SIZE_HEADER_INDEX) * FX_PAGESIZE;
-}
-
-
-
-
-async function readAndCombineData(serialManager, readLen) {
-    let combinedData = new Uint8Array(0);
-
-    while (true) {
-        const readResult = await serialManager.reader.read(readLen);
-        if (readResult.done) {
-            // Handle the end of the stream if necessary.
-            break;
-        }
-
-        const newData = readResult.value;
-		
-        // Combine the new data with the previously received data
-        let temp = new Uint8Array(combinedData.length + newData.length);
-        temp.set(combinedData, 0);
-        temp.set(newData, combinedData.length);
-        combinedData = temp;
-
-        // Check the first character of the combined data
-        if (combinedData.length >= readLen) {
-            break; // Exit loop if the condition is met
-        }
-    }
-
-    return combinedData;
-
-}
-
-
-
-async function endOfCart(serialManager) {
-	let slots = 0;
-	let headerAddr = 0;
-	
-    while (true) {
-		/*
-        if ((slots >> 6) & 1) {
-     await serialManager.writer.write(new Uint8Array([ord("x"), 0xC0])); // red led and disable buttons
-
-
-        } else {
-     await serialManager.writer.write(new Uint8Array([ord("x"), 0xC1])); // red led and disable buttons
-
-
-        }
-		*/
-        //await serialManager.reader.read(1); 
-
-        const blockAddr = headerAddr / FX_PAGESIZE;
-        const readLen = HEADER_LENGTH;
-        await serialManager.writeAndRead(new Uint8Array([ord("A"), blockAddr >> 8, blockAddr & 0xFF]));
-        await serialManager.writer.write(new Uint8Array([ord("g"), (readLen >> 8) & 0xFF, readLen & 0xFF, ord("C")]));
-
-		const header = await readAndCombineData(serialManager, readLen);
-
-	
-		console.log("header ", header);
-
-        if (!isSlot(header, 0)) {
-            break;
-        }
-
-        slots++;
-        headerAddr += getSlotSizeBytes(header, 0);
-    }
-    
-    return headerAddr; // Return the final headerAddr value
-}
-
-// Utility function to convert a character to its ASCII code
-function ord(str) {
-    return str.charCodeAt(0);
-}
-
-
-
-async function flashArduboy(hexFileData, devData) {
-
-    if (!hexFileData.length) {
-        throw new Error("No hex data provided!");
-    }
-    if (!devData.length) {
-        throw new Error("No flash data provided!");
-    }
-
-    const devDataBlocks = devData.length / FX_BLOCKSIZE;
-    console.log("devDataBlocks: ", devDataBlocks);
-
-    let parsedHexData = parseIntelHex(hexFileData);
-
-    const serial1 = new SerialPortManager();
-    await serial1.initPort();
-
-    const headerAddr = await endOfCart(serial1);
-       const lastBlock = Math.floor(headerAddr / FX_BLOCKSIZE);
-
-
-
-debug({headerAddr});
-debug({lastBlock});
-debug({devDataBlocks})
-debug({FX_BLOCKS_PER_FULLCART});
-
-    if (lastBlock + devDataBlocks < FX_BLOCKS_PER_FULLCART) {
-        console.log("Dev Data Free Alloc Success!");
-        blockStartAddr = FX_BLOCKS_PER_FULLCART - devDataBlocks;
-
-        await beginProgramming(serial1);
-		
-		let readBlock = 0;
-        // flash external memory
-        for (let block = blockStartAddr; block < FX_BLOCKS_PER_FULLCART; block++) {
-            await flashBlock(serial1, block, devData, readBlock);
-			readBlock++;
-        }
-
-		await waitforme(500);
-
-		
-		console.log("Attempting to flash hex");
-        let pageStart = 0;
-        let address = 0;
-		// flash hex
-        do {
-            //drawPercentage((pageStart / parsedHexData.data.length) * 100);
-            await serial1.writeAndRead(new Uint8Array([0x41, (address >> 8) & 0xFF, address & 0xFF])); //addresss command
-            let txx = flashHexPage(parsedHexData, pageStart); //generate  page data
-			        cmd = new Uint8Array([0x42, 0x00, 0x80, 0x46]); //flash page write command ('B' + 2bytes size + 'F')
-
-        await serial1.writer.write(cmd);
-            await serial1.writeAndRead(txx); //write the page data
-
-            pageStart += 128;
-            address += 64;
-        } while (pageStart < parsedHexData.data.length);
-		console.log("finish hex");
-        await leaveBootloader(serial1);
-		
-
-        await endProgramming(serial1);
-		
-		
-
-    } else {
-        alert("Not enough free memory.");
-        throw new Error("Dev Data Free Alloc Fail!");
-    }
-
-    // flash bindata starting at start address
-
-
-    /*
-    let blocks = Math.ceil(flashData.length / FX_BLOCKSIZE);
-    console.log('Flashing ${blocks} blocks to FX');
-
-    for (let block = 0; block < blocks; block++) {
-
-    await flashBlock(serial1, block, blocks, flashData, pageNumber, FX_PAGESIZE, FX_BLOCKSIZE);
-
-    if (verify) {
-    // TODO -- TEST and get working --- UNTESTED
-    await serial1.writeAndRead(new Uint8Array(['A'.charCodeAt(0), blockAddr >> 8, blockAddr & 0xFF]));
-    await serial1.writeAndRead(new Uint8Array(['g'.charCodeAt(0), blockLen >> 8, blockLen & 0xFF, 'C'.charCodeAt(0)]));
-    const verifyData = await serial1.reader.read(blockLen);
-    if (!equals(verifyData, flashData.slice(block * FX_BLOCKSIZE, block * FX_BLOCKSIZE + blockLen))) {
-    throw new Error('FX verify failed at address ${blockAddr.toString(16)}. Upload unsuccessful.');
-    }
-    }
-
-    }
-     */
-
-    await serial1.cleanup();
-
-    console.log("Success in flashing FX!!");
-
-}
 
 
 

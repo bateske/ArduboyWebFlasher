@@ -399,16 +399,12 @@ async function loadFile(file) {
         let devData;
 
         if (flashFileData) {
-            console.log("flashFileData: ", flashFileData.length);
             flashFileData = padToMultiple(flashFileData, 256); //FX_PAGESIZE
-            console.log("flashFileDataPadded: ", flashFileData.length);
             devData = flashFileData;
         }
 
         if (saveFileData) {
-            console.log("saveFileData: ", saveFileData.length);
             saveFileData = padToMultiple(saveFileData, 4096);
-            console.log("flashFileDataPadded: ", flashFileData.length);
             if (flashFileData) {
                 devData = devData + saveFileData;
             } else {
@@ -417,14 +413,10 @@ async function loadFile(file) {
             }
         }
 
-        console.log("devDataLength: ", devData.length);
-
         const paddedData = padDataToBlockSize(devData, FX_BLOCKSIZE);
-        console.log("devDataPadded:", paddedData.length); // This should now be a multiple of 65536
 
         await flashArduboy(hexFileData, paddedData);
 
-        // Additional processing with hexFileData, flashFileData, saveFileData
     } catch (e) {
         console.error("Error processing file:", e);
     }
@@ -790,44 +782,31 @@ const FX_BLOCKS_PER_FULLCART = FX_FULLCART_SIZE / FX_BLOCKSIZE;
 
 
 async function flashBlock(serialManager, writeBlock, flashData, readBlock) {
-	
-	if (readBlock === undefined || readBlock === null) {
+
+    if (readBlock === undefined || readBlock === null) {
         readBlock = writeBlock;
     }
-	
-    let blockAddr = writeBlock * FX_BLOCKSIZE / FX_PAGESIZE;
-	let readOffset = readBlock * FX_BLOCKSIZE;
-   debug({writeBlock});
-   debug({readBlock});
-   
-   const addrCommand = new Uint8Array(['A'.charCodeAt(0), blockAddr >> 8, blockAddr & 0xFF]);
-   
-   debug({addrCommand});
-   
 
-    await serialManager.writeAndRead( addrCommand ); // address command
+    let blockAddr = writeBlock * FX_BLOCKSIZE / FX_PAGESIZE;
+    let readOffset = readBlock * FX_BLOCKSIZE;
+
+    const addrCommand = new Uint8Array(['A'.charCodeAt(0), blockAddr >> 8, blockAddr & 0xFF]);
+
+    await serialManager.writeAndRead(addrCommand); // address command
 
     let dataSlice = flashData.slice(readOffset, readOffset + FX_BLOCKSIZE);
-    console.log("Length of data Block:", dataSlice.length);
     let realBlockLen = dataSlice.length;
-debug({dataSlice});
+
     await serialManager.writer.write(new Uint8Array(['B'.charCodeAt(0), realBlockLen >> 8, realBlockLen & 0xFF, 'C'.charCodeAt(0)])); // data command
     await serialManager.writer.write(dataSlice); // data write
-    console.log("Block written! attempting to Read");
-
-    await serialManager.reader.read(1); 
-    console.log("read complete!");
+    await serialManager.reader.read(1);
 }
-
-
-
 
 
 async function flashFx(flashData, pageNumber = 0, verify = false) {
     if (!flashData.length) {
         throw new Error("No flash data provided!");
     }
-
 
     const serial1 = new SerialPortManager();
     await serial1.initPort();
@@ -870,7 +849,6 @@ async function leaveBootloader(serialManager) {
 
 function flashHexPage(flashData, pageStart) {
     let data, pad, txx;
-
 
     // Check if this is the last page (possibly incomplete -> fill with 0xFF)
     if (pageStart + 128 > flashData.data.length) {
@@ -920,15 +898,9 @@ async function flashHex(hexData) {
 
     await serial1.cleanup();
 
-    console.log("finished!");
+    console.log("Success in writing Arduboy Hex!");
 
 }
-
-
-
-
-
-
 
 
 // Function to check if the data at the given index is an FX slot
@@ -950,8 +922,6 @@ function get2ByteValue(fullData, index) {
 function getSlotSizeBytes(fullData, index) {
     return get2ByteValue(fullData, index + SLOT_SIZE_HEADER_INDEX) * FX_PAGESIZE;
 }
-
-
 
 
 async function readAndCombineData(serialManager, readLen) {
@@ -983,24 +953,11 @@ async function readAndCombineData(serialManager, readLen) {
 }
 
 
-
 async function endOfCart(serialManager) {
 	let slots = 0;
 	let headerAddr = 0;
 	
     while (true) {
-		/*
-        if ((slots >> 6) & 1) {
-     await serialManager.writer.write(new Uint8Array([ord("x"), 0xC0])); // red led and disable buttons
-
-
-        } else {
-     await serialManager.writer.write(new Uint8Array([ord("x"), 0xC1])); // red led and disable buttons
-
-
-        }
-		*/
-        //await serialManager.reader.read(1); 
 
         const blockAddr = headerAddr / FX_PAGESIZE;
         const readLen = HEADER_LENGTH;
@@ -1008,9 +965,6 @@ async function endOfCart(serialManager) {
         await serialManager.writer.write(new Uint8Array([ord("g"), (readLen >> 8) & 0xFF, readLen & 0xFF, ord("C")]));
 
 		const header = await readAndCombineData(serialManager, readLen);
-
-	
-		console.log("header ", header);
 
         if (!isSlot(header, 0)) {
             break;
@@ -1029,7 +983,6 @@ function ord(str) {
 }
 
 
-
 async function flashArduboy(hexFileData, devData) {
 
     if (!hexFileData.length) {
@@ -1041,94 +994,60 @@ async function flashArduboy(hexFileData, devData) {
 
     const devDataBlocks = devData.length / FX_BLOCKSIZE;
     console.log("devDataBlocks: ", devDataBlocks);
-
+	
     let parsedHexData = parseIntelHex(hexFileData);
 
     const serial1 = new SerialPortManager();
     await serial1.initPort();
 
     const headerAddr = await endOfCart(serial1);
-       const lastBlock = Math.floor(headerAddr / FX_BLOCKSIZE);
+    const lastBlock = Math.floor(headerAddr / FX_BLOCKSIZE);
 
-
-
-debug({headerAddr});
-debug({lastBlock});
-debug({devDataBlocks})
-debug({FX_BLOCKS_PER_FULLCART});
 
     if (lastBlock + devDataBlocks < FX_BLOCKS_PER_FULLCART) {
         console.log("Dev Data Free Alloc Success!");
         blockStartAddr = FX_BLOCKS_PER_FULLCART - devDataBlocks;
 
         await beginProgramming(serial1);
-		
-		let readBlock = 0;
+
+        let readBlock = 0;
         // flash external memory
         for (let block = blockStartAddr; block < FX_BLOCKS_PER_FULLCART; block++) {
             await flashBlock(serial1, block, devData, readBlock);
-			readBlock++;
+            readBlock++;
         }
 
-		await waitforme(500);
+        await waitforme(500);
 
-		
-		console.log("Attempting to flash hex");
+        console.log("Attempting to flash hex");
         let pageStart = 0;
         let address = 0;
-		// flash hex
+        // flash hex
         do {
             //drawPercentage((pageStart / parsedHexData.data.length) * 100);
             await serial1.writeAndRead(new Uint8Array([0x41, (address >> 8) & 0xFF, address & 0xFF])); //addresss command
             let txx = flashHexPage(parsedHexData, pageStart); //generate  page data
-			        cmd = new Uint8Array([0x42, 0x00, 0x80, 0x46]); //flash page write command ('B' + 2bytes size + 'F')
+            cmd = new Uint8Array([0x42, 0x00, 0x80, 0x46]); //flash page write command ('B' + 2bytes size + 'F')
 
-        await serial1.writer.write(cmd);
+            await serial1.writer.write(cmd);
             await serial1.writeAndRead(txx); //write the page data
 
             pageStart += 128;
             address += 64;
         } while (pageStart < parsedHexData.data.length);
-		console.log("finish hex");
+        console.log("Finished!");
         await leaveBootloader(serial1);
-		
 
         await endProgramming(serial1);
-		
-		
 
     } else {
         alert("Not enough free memory.");
         throw new Error("Dev Data Free Alloc Fail!");
     }
 
-    // flash bindata starting at start address
-
-
-    /*
-    let blocks = Math.ceil(flashData.length / FX_BLOCKSIZE);
-    console.log('Flashing ${blocks} blocks to FX');
-
-    for (let block = 0; block < blocks; block++) {
-
-    await flashBlock(serial1, block, blocks, flashData, pageNumber, FX_PAGESIZE, FX_BLOCKSIZE);
-
-    if (verify) {
-    // TODO -- TEST and get working --- UNTESTED
-    await serial1.writeAndRead(new Uint8Array(['A'.charCodeAt(0), blockAddr >> 8, blockAddr & 0xFF]));
-    await serial1.writeAndRead(new Uint8Array(['g'.charCodeAt(0), blockLen >> 8, blockLen & 0xFF, 'C'.charCodeAt(0)]));
-    const verifyData = await serial1.reader.read(blockLen);
-    if (!equals(verifyData, flashData.slice(block * FX_BLOCKSIZE, block * FX_BLOCKSIZE + blockLen))) {
-    throw new Error('FX verify failed at address ${blockAddr.toString(16)}. Upload unsuccessful.');
-    }
-    }
-
-    }
-     */
-
     await serial1.cleanup();
 
-    console.log("Success in flashing FX!!");
+    console.log("Success in flashing Arduboy File!!");
 
 }
 

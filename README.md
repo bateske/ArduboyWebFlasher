@@ -12,14 +12,16 @@ It is specifically designed for use with the Arduboy FX, although some features 
 
 ## To-do
 
-1. Turn code into library so it can easily be embedded into websites
-2. Ability to handle .arduboy files
+1. Add progress bar to .arduboy uploads
+2. Option to (safely) upload .bin to development data
+3. Turn code into library so it can easily be embedded into websites
 
 ## Possibly To-do
 
 1. Ability to backup .hex and .bin file from device
 2. Ability to backup and upload EEPROM from device
 3. Ability to verify uploads
+
 
 # Acknowledgements
 

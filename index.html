@@ -406,7 +406,8 @@ async function loadFile(file) {
         if (saveFileData) {
             saveFileData = padToMultiple(saveFileData, 4096);
             if (flashFileData) {
-                devData = devData + saveFileData;
+                //devData = devData + saveFileData;
+    	        devData = new Uint8Array([ ...flashFileData, ...saveFileData ]);
             } else {
                 console.log("Save File found, but no Data File. Aborting!");
                 return;

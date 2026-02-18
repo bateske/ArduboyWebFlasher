@@ -22,157 +22,15 @@
 		
 	
     <link rel="stylesheet" href="style.css?cachebust=2023121401" />
-	
-	<style>
-  .modalOverlay{
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.72);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    padding: 24px;
-  }
-  .modalOverlay.show{ display: flex; }
-
-  .modalCard{
-    width: min(520px, 100%);
-    background: #111;
-    color: #fff;
-    border: 2px solid rgba(255,255,255,0.12);
-    border-radius: 18px;
-    padding: 20px 18px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    text-align: left;
-  }
-  .modalCard h2{
-    margin: 0 0 8px 0;
-    font-size: 22px;
-    line-height: 1.2;
-  }
-  .modalSub{
-    margin: 0 0 16px 0;
-    opacity: 0.85;
-    font-size: 14px;
-  }
-
-  .modalBtns{
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-top: 6px;
-  }
-
-  /* Unified button styling */
-  .modalBtn{
-    padding: 14px 12px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.18);
-    background: rgba(255,255,255,0.06);
-    color: #fff;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
-  }
-  .modalBtn:hover{
-    background: rgba(255,255,255,0.10);
-    transform: translateY(-1px);
-  }
-  .modalBtn:active{
-    transform: translateY(0px);
-  }
-
-  /* Selected state (subtle highlight, same hover behavior) */
-  .modalBtn.selected{
-    border-color: rgba(251,241,87,0.55);
-    background: rgba(251,241,87,0.12);
-  }
-
-  /* Footer / remember row full width, no awkward wrap */
-  .modalFoot{
-    margin-top: 14px;
-    font-size: 13px;
-    opacity: 0.95;
-    width: 100%;
-  }
-  .rememberChoice{
-    display: flex;
-    width: 100%;
-    gap: 10px;
-    align-items: center;
-    cursor: pointer;
-    user-select: none;
-    line-height: 1.25;
-    white-space: normal;
-  }
-  .rememberChoice input{
-    flex: 0 0 auto;
-  }
-  .rememberChoice span{
-    flex: 1 1 auto;
-  }
-
-  /* Mode button on main page */
-  .modeBar{
-    margin: 10px 0 6px 0;
-  }
-  .modeBtn{
-    border-radius: 999px;
-    padding: 8px 12px;
-    border: 1px solid rgba(255,255,255,0.18);
-    background: rgba(255,255,255,0.06);
-    color: #fff;
-    cursor: pointer;
-    font-size: 13px;
-    transition: background 120ms ease, transform 120ms ease;
-  }
-  .modeBtn:hover{
-    background: rgba(255,255,255,0.10);
-    transform: translateY(-1px);
-  }
-  .modeBtn:active{ transform: translateY(0px); }
-</style>
-
-
-	
   </head>
   <body>
   
   
-<!-- Device select modal -->
-<div id="deviceModal" class="modalOverlay" aria-hidden="true">
-  <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="deviceModalTitle">
-    <h2 id="deviceModalTitle">Which Arduboy do you have?</h2>
-    <p class="modalSub">
-      This sets the default cart file used when you click Upload with no file selected.
-    </p>
 
-<div class="modalBtns">
-  <button id="chooseFX" class="modalBtn" type="button">FX</button>
-  <button id="chooseFXC" class="modalBtn" type="button">FX-C</button>
-</div>
-
-    <div class="modalFoot">
-<label class="rememberChoice">
-  <input type="checkbox" id="rememberDevice" checked>
-  <span>Remember my choice on this computer</span>
-</label>
-    </div>
-  </div>
-</div>
 	
 <center>
    <h1>Arduboy Web Flasher</h1>
    <h3>Update your Arduboy FX with one click!<br>Get the most up to date collection of all the games!</h3>
-   
-   <div class="modeBar">
-  <button id="modeBtn" class="modeBtn" type="button">
-    Mode: <span id="modeLabel">—</span> (change)
-  </button>
-</div>
-
    <div id="progressBar" class="circular-progress" data-inner-circle-color="lightgrey" data-percentage="0" data-progress-color="#FBF157" data-bg-color="black">
       <div class="inner-circle"></div>
       <div class="progressHolder">
@@ -233,87 +91,6 @@ const fileInput = document.getElementById('fileInput');
 const fileButton = document.getElementById('fileButton');
 const fileName = document.getElementById('fileName');
 const uploadBtn = document.getElementById('uploadBtn');
-
-
-const modeBtn = document.getElementById("modeBtn");
-const modeLabel = document.getElementById("modeLabel");
-
-
-  const DEVICE_KEY = "arduboy_web_flasher_device";
-  const modal = document.getElementById("deviceModal");
-  const chooseFX = document.getElementById("chooseFX");
-  const chooseFXC = document.getElementById("chooseFXC");
-  const rememberDevice = document.getElementById("rememberDevice");
-
-  // Default filenames for each device
-  const DEFAULT_BIN_BY_DEVICE = {
-    "FX":  "Whole Enchilada.bin",
-    "FX-C": "FX-C-Multi.bin"
-  };
-  
-  
-  modeBtn?.addEventListener("click", () => {
-  showDeviceModal();
-});
-  
-
-  // Active default bin (used when no file is selected)
-  let selectedDevice = null;
-  let DEFAULT_BIN = DEFAULT_BIN_BY_DEVICE["FX"]; // fallback
-  
-function setTargetDevice(device) {
-  selectedDevice = device;
-  DEFAULT_BIN = DEFAULT_BIN_BY_DEVICE[device] || DEFAULT_BIN_BY_DEVICE["FX"];
-
-  // Modal button selected state
-  chooseFX.classList.toggle("selected", device === "FX");
-  chooseFXC.classList.toggle("selected", device === "FX-C");
-
-  // Update page mode indicator
-  if (modeLabel) modeLabel.textContent = device;
-
-  // Update UI label so it's obvious what happens if they just press Upload
-  if (fileInput && !fileInput.files.length) {
-    fileName.textContent = DEFAULT_BIN;
-  }
-
-  // Persist choice if requested
-  if (rememberDevice && rememberDevice.checked) {
-    localStorage.setItem(DEVICE_KEY, device);
-  } else {
-    localStorage.removeItem(DEVICE_KEY);
-  }
-
-  // Hide modal
-  modal.classList.remove("show");
-  modal.setAttribute("aria-hidden", "true");
-}
-
-
-function showDeviceModal() {
-  // Ensure selected styling is accurate when reopening
-  chooseFX.classList.toggle("selected", selectedDevice === "FX");
-  chooseFXC.classList.toggle("selected", selectedDevice === "FX-C");
-
-  modal.classList.add("show");
-  modal.setAttribute("aria-hidden", "false");
-}
-
-  chooseFX.addEventListener("click", () => setTargetDevice("FX"));
-  chooseFXC.addEventListener("click", () => setTargetDevice("FX-C"));
-
-  // On page load: restore device if saved, otherwise force choice
-  window.addEventListener("DOMContentLoaded", () => {
-    const saved = localStorage.getItem(DEVICE_KEY);
-    if (saved && DEFAULT_BIN_BY_DEVICE[saved]) {
-      setTargetDevice(saved);
-    } else {
-      // show modal and require a choice
-      showDeviceModal();
-    }
-  });
-
-
 
 uploadBtn.addEventListener('click', handleSubmit, false);
 resetBtn.addEventListener('click', handleReset, false);
@@ -664,7 +441,7 @@ async function handleSubmit(e) {
 
         // If no file is provided, use the default file
 
-        const response = await fetch(DEFAULT_BIN);
+        const response = await fetch('Whole Enchilada.bin');
         if (!response.ok) {
             alert("Error loading default file");
             return;
